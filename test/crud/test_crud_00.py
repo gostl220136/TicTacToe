@@ -1,6 +1,6 @@
-from BACKEND_NAME_PLACEHOLDER.crud import Crud
-from BACKEND_NAME_PLACEHOLDER.engine import get_engine
-from BACKEND_NAME_PLACEHOLDER.schema import EntityBase
+from src.crud import Crud
+from src.engine import get_engine
+from src.schema import EntityBase
 
 
 def test_crud_00():

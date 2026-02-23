@@ -1,8 +1,8 @@
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session
 
-from BACKEND_NAME_PLACEHOLDER.model import Entity, Person, User
-from BACKEND_NAME_PLACEHOLDER.schema import EntityBase
+from src.model import Entity, Person, User
+from src.schema import EntityBase
 
 
 class Crud:

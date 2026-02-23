@@ -1,4 +1,4 @@
-from BACKEND_NAME_PLACEHOLDER.schema import EntityBase, EntityFull
+from src.schema import EntityBase, EntityFull
 
 
 def test_entity_00():
