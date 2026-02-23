@@ -1,0 +1,123 @@
+from fastapi import APIRouter, Depends, HTTPException
+from starlette.responses import Response
+from src.api._auth import get_current_user
+from src.crud import Crud
+from src.engine import get_engine
+from src.schema import Game, GameList
+
+router = APIRouter()
+crud = Crud(get_engine())
+
+
+@router.post("/games", response_model=Game, status_code=201, responses={201: {"description": "Game created successfully"}})
+def create_game(current_user=Depends(get_current_user)):
+    game = crud.create_game(current_user.user_name)
+    return Game(
+        id=game.id,
+        player_x=game.player_x,
+        player_o=game.player_o,
+        board=game.board,
+        current_player=game.current_player,
+        status=game.status,
+        winner=game.winner,
+        moves=game.moves
+    )
+
+
+@router.get("/games", response_model=GameList)
+def get_games(current_user=Depends(get_current_user)):
+    games = crud.get_user_games(current_user.user_name)
+    game_list = [
+        Game(
+            id=g.id,
+            player_x=g.player_x,
+            player_o=g.player_o,
+            board=g.board,
+            current_player=g.current_player,
+            status=g.status,
+            winner=g.winner,
+            moves=g.moves
+        ) for g in games
+    ]
+    return GameList(games=game_list)
+
+
+@router.get("/games/available", response_model=GameList)
+def get_available_games():
+    games = crud.get_available_games()
+    game_list = [
+        Game(
+            id=g.id,
+            player_x=g.player_x,
+            player_o=g.player_o,
+            board=g.board,
+            current_player=g.current_player,
+            status=g.status,
+            winner=g.winner,
+            moves=g.moves
+        ) for g in games
+    ]
+    return GameList(games=game_list)
+
+
+@router.get("/games/{game_id}", response_model=Game)
+def get_game(game_id: int, current_user=Depends(get_current_user)):
+    game = crud.get_game(game_id)
+    if not game or (game.player_x != current_user.user_name and game.player_o != current_user.user_name):
+        raise HTTPException(status_code=404, detail="Game not found")
+    return Game(
+        id=game.id,
+        player_x=game.player_x,
+        player_o=game.player_o,
+        board=game.board,
+        current_player=game.current_player,
+        status=game.status,
+        winner=game.winner,
+        moves=game.moves
+    )
+
+
+@router.put("/games/{game_id}/move/{position}", response_model=Game)
+def make_move(game_id: int, position: int, current_user=Depends(get_current_user)):
+    game = crud.get_game(game_id)
+    if not game or (game.player_x != current_user.user_name and game.player_o != current_user.user_name):
+        raise HTTPException(status_code=404, detail="Game not found")
+    if position < 1 or position > 9:
+        raise HTTPException(status_code=400, detail="Invalid position")
+    game = crud.make_move(game_id, position, current_user.user_name)
+    if not game:
+        raise HTTPException(status_code=400, detail="Invalid move")
+    return Game(
+        id=game.id,
+        player_x=game.player_x,
+        player_o=game.player_o,
+        board=game.board,
+        current_player=game.current_player,
+        status=game.status,
+        winner=game.winner,
+        moves=game.moves
+    )
+
+
+@router.post("/games/{game_id}/join", response_model=Game)
+def join_game(game_id: int, current_user=Depends(get_current_user)):
+    game = crud.join_game(game_id, current_user.user_name)
+    if not game:
+        raise HTTPException(status_code=400, detail="Cannot join game")
+    return Game(
+        id=game.id,
+        player_x=game.player_x,
+        player_o=game.player_o,
+        board=game.board,
+        current_player=game.current_player,
+        status=game.status,
+        winner=game.winner,
+        moves=game.moves
+    )
+
+
+@router.delete("/games/{game_id}", status_code=204)
+def delete_game(game_id: int, current_user=Depends(get_current_user)):
+    if not crud.delete_game(game_id, current_user.user_name):
+        raise HTTPException(status_code=404, detail="Game not found")
+    return Response(status_code=204)

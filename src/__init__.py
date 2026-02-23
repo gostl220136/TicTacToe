@@ -1,4 +1,4 @@
-from . import api, config, crud, engine, model, schema, utils
+from . import api, config, crud, engine, model, schema, service, utils
 
 __all__ = [
     "api",
@@ -7,5 +7,6 @@ __all__ = [
     "engine",
     "model",
     "schema",
+    "service",
     "utils",
 ]
