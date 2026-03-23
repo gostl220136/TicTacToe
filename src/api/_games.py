@@ -77,6 +77,23 @@ def get_game(game_id: int, current_user=Depends(get_current_user)):
     )
 
 
+@router.post("/games/{game_id}/join", response_model=Game)
+def join_game(game_id: int, current_user=Depends(get_current_user)):
+    game = crud.join_game(game_id, current_user.user_name)
+    if not game:
+        raise HTTPException(status_code=400, detail="Cannot join this game")
+    return Game(
+        id=game.id,
+        player_x=game.player_x,
+        player_o=game.player_o,
+        board=game.board,
+        current_player=game.current_player,
+        status=game.status,
+        winner=game.winner,
+        moves=game.moves
+    )
+
+
 @router.put("/games/{game_id}/move/{position}", response_model=Game)
 def make_move(game_id: int, position: int, current_user=Depends(get_current_user)):
     game = crud.get_game(game_id)
@@ -97,6 +114,14 @@ def make_move(game_id: int, position: int, current_user=Depends(get_current_user
         winner=game.winner,
         moves=game.moves
     )
+
+
+@router.delete("/games/{game_id}", status_code=204)
+def delete_game(game_id: int, current_user=Depends(get_current_user)):
+    success = crud.delete_game(game_id, current_user.user_name)
+    if not success:
+        raise HTTPException(status_code=404, detail="Game not found or not authorized")
+    return Response(status_code=204)
 
 
 @router.post("/games/{game_id}/join", response_model=Game)
