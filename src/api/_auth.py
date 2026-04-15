@@ -1,7 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from starlette.responses import Response
-from sqlalchemy.orm import Session
 from src.crud import Crud
 from src.engine import get_engine
 from src.schema import Token, User, UserCreate, UserUpdate
@@ -27,7 +25,14 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> UserModel:
     return user
 
 
-@router.post("/register", response_model=User, status_code=201, responses={201: {"description": "User created successfully"}})
+@router.post(
+    "/register",
+    response_model=User,
+    status_code=201,
+    summary="Register a new user",
+    description="Create a user account with username, password, and display name.",
+    responses={201: {"description": "User created successfully"}},
+)
 def register(user_data: UserCreate):
     # Check if user exists
     if crud.get_user_by_username(user_data.user_name):
@@ -36,7 +41,12 @@ def register(user_data: UserCreate):
     return User(user_name=user.user_name, name=user_data.name)
 
 
-@router.post("/login", response_model=Token)
+@router.post(
+    "/login",
+    response_model=Token,
+    summary="Login and get access token",
+    description="Authenticate with username and password and receive a Bearer JWT token.",
+)
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user = crud.authenticate_user(form_data.username, form_data.password)
     if not user:
@@ -49,12 +59,22 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
     return Token(access_token=access_token, token_type="bearer")
 
 
-@router.get("/me", response_model=User)
+@router.get(
+    "/me",
+    response_model=User,
+    summary="Get current user",
+    description="Return profile information for the authenticated user.",
+)
 def get_current_user_info(current_user: UserModel = Depends(get_current_user)):
     return User(user_name=current_user.user_name, name=current_user.entity.name)
 
 
-@router.put("/me", response_model=User)
+@router.put(
+    "/me",
+    response_model=User,
+    summary="Update current user",
+    description="Update the display name of the authenticated user.",
+)
 def update_current_user(user_update: UserUpdate, current_user: UserModel = Depends(get_current_user)):
     if not crud.update_user(current_user.user_name, user_update.name):
         raise HTTPException(status_code=404, detail="User not found")

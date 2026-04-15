@@ -242,10 +242,17 @@ def test_draw_condition(client: TestClient) -> None:
 # ---------------------------------------------------------------------------
 
 def test_delete_game_success(client: TestClient) -> None:
-    """The owner can delete their own game."""
-    token = get_token(client, "del_user1", "pass", "Del User 1")
-    headers = {"Authorization": f"Bearer {token}"}
-    game_id = client.post("/games", headers=headers).json()["id"]
+    """The owner can delete their own completed game."""
+    game_id, token_x, token_o = _create_ongoing_game(client, "del_x1", "del_o1")
+    moves = [
+        (token_x, 1), (token_o, 4),
+        (token_x, 2), (token_o, 5),
+        (token_x, 3),
+    ]
+    for token, pos in moves:
+        client.put(f"/games/{game_id}/move/{pos}", headers={"Authorization": f"Bearer {token}"})
+
+    headers = {"Authorization": f"Bearer {token_x}"}
     resp = client.delete(f"/games/{game_id}", headers=headers)
     assert resp.status_code == 204
     # Confirm it's gone
@@ -254,11 +261,20 @@ def test_delete_game_success(client: TestClient) -> None:
 
 def test_delete_game_not_owner(client: TestClient) -> None:
     """A user that does not own the game cannot delete it."""
-    token_owner = get_token(client, "del_owner2", "pass", "Del Owner 2")
+    game_id, token_owner, token_other_player = _create_ongoing_game(client, "del_owner2", "del_player2")
     token_other = get_token(client, "del_other2", "pass", "Del Other 2")
-    game_id = client.post("/games", headers={"Authorization": f"Bearer {token_owner}"}).json()["id"]
+
+    # Finish game first (owner wins)
+    moves = [
+        (token_owner, 1), (token_other_player, 4),
+        (token_owner, 2), (token_other_player, 5),
+        (token_owner, 3),
+    ]
+    for token, pos in moves:
+        client.put(f"/games/{game_id}/move/{pos}", headers={"Authorization": f"Bearer {token}"})
+
     resp = client.delete(f"/games/{game_id}", headers={"Authorization": f"Bearer {token_other}"})
-    assert resp.status_code == 404
+    assert resp.status_code == 400
 
 
 def test_delete_game_unauthenticated(client: TestClient) -> None:
@@ -266,3 +282,12 @@ def test_delete_game_unauthenticated(client: TestClient) -> None:
     game_id = client.post("/games", headers={"Authorization": f"Bearer {token}"}).json()["id"]
     resp = client.delete(f"/games/{game_id}")
     assert resp.status_code == 401
+
+
+def test_delete_game_not_completed(client: TestClient) -> None:
+    """Deleting a waiting or ongoing game is rejected."""
+    token = get_token(client, "del_waiting1", "pass", "Del Waiting")
+    headers = {"Authorization": f"Bearer {token}"}
+    game_id = client.post("/games", headers=headers).json()["id"]
+    resp = client.delete(f"/games/{game_id}", headers=headers)
+    assert resp.status_code == 400

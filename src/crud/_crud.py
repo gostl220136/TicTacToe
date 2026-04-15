@@ -73,7 +73,7 @@ class Crud:
         with Session(self._engine) as session:
             stmt = select(Game).where(Game.id == game_id, ((Game.player_x == user_name) | (Game.player_o == user_name)))
             game = session.scalar(stmt)
-            if game:
+            if game and game.status in {"won", "draw"}:
                 session.delete(game)
                 session.commit()
                 return True
@@ -128,14 +128,18 @@ class Crud:
 
     def make_move(self, game_id: int, position: int, user_name: str) -> Optional[Game]:
         game = self.get_game(game_id)
-        if not game or game.status != "ongoing":
-            return None
+        if not game:
+            raise ValueError("Game not found")
+        if game.status != "ongoing":
+            raise ValueError("Game is not in progress")
         # Check if user is the current player
         current_player_user = game.player_x if game.current_player == "X" else game.player_o
         if current_player_user != user_name:
-            return None
-        if position < 1 or position > 9 or game.board[position - 1] != "":
-            return None
+            raise ValueError("Not your turn")
+        if position < 1 or position > 9:
+            raise ValueError("Invalid position")
+        if game.board[position - 1] != "":
+            raise ValueError("Position already taken")
 
         game.board[position - 1] = game.current_player
         game.moves.append({"player": game.current_player, "position": position})

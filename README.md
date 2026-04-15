@@ -1,71 +1,115 @@
-# FastAPI TicTacToe Game REST API Development Project
-## Objective
-Design, implement, and test a FastAPI-based REST API for a TicTacToe game. 
+# TicTacToe FastAPI REST API
 
-The API should enable users to:
+REST API for authenticated TicTacToe gameplay with persistent game state and move history.
 
-- Create and manage games
-- Make moves
-- Check win/draw conditions
-- View game history
+## Features
 
-The project should demonstrate proficiency in RESTful API design, database integration, business logic, testing, and documentation.
+- FastAPI app with JWT authentication (OAuth2 password flow)
+- SQLAlchemy ORM persistence (PostgreSQL-ready)
+- Full TicTacToe game logic:
+  - move validation
+  - win detection (rows, columns, diagonals)
+  - draw detection
+- Game history stored as ordered move list
+- OpenAPI/Swagger documentation with endpoint descriptions and schema examples
+- Pytest test suite for auth and game endpoints including edge cases
 
-## Requirements
-**1. FastAPI REST API with User Authentication**
-- Develop a FastAPI application for the TicTacToe game.
-- Implement basic user handling and authentication (e.g., JWT or OAuth2).
-- Ensure secure access to game endpoints.
+## Authentication
 
-**2. CRUD Operations for Game Management**
-- Use SQLAlchemy ORM to interact with a PostgreSQL database.
-- Implement CRUD operations for:
-  - Creating new games
-  - Updating move histories
-  - Deleting completed games
+- Users must register and log in.
+- All core game endpoints require Bearer JWT authentication.
+- Token endpoint:
+  - `POST /auth/login`
 
-**3. Business Logic**
-- Implement logic to:
- - Check win conditions (rows, columns, diagonals)
- - Detect draws (all positions filled, no winner)
- - Handle invalid moves (e.g., occupied positions, out-of-bounds)
+## Game State Model
 
-**4. API Endpoints**
-- Implement the following endpoints:
+- `board`: list with 9 entries (`"X"`, `"O"`, or `""`)
+- `current_player`: `"X"` or `"O"`
+- `status`: `"waiting"`, `"ongoing"`, `"won"`, `"draw"`
+- `winner`: `"X"` / `"O"` / `null`
+- `moves`: ordered list of `{ player, position }`
 
-  - ``/games``	**POST**	Create a new game.
-  - ``/games``	**GET**	    Retrieve a list of all games, including move histories and statuses.
-  - ``/games/{game_id}/move/{position}``	**PUT**	Make a move at the specified position (1–9) in the given game.
-  - ``/games/{game_id}``	**GET**	Retrieve details of a specific game, including move history and status.
+## API Endpoints
 
-**5. Unit Testing**
-- Write unit tests for all API endpoints using FastAPI’s testing framework or pytest.
-- Test edge cases (e.g., invalid moves, authentication failures).
+### Auth
 
-**6. Documentation**
-- Use FastAPI’s OpenAPI/Swagger support to document the API.
-- Include clear descriptions for endpoints, request/response schemas, and examples.
+- `POST /auth/register` - create user
+- `POST /auth/login` - get access token
+- `GET /auth/me` - get current user profile
+- `PUT /auth/me` - update display name
 
-**7. Code Quality**
-- Follow best practices for code organization, readability, and maintainability.
-- Use a modular project structure (e.g., separate files for models, routes, tests).
+### Games
 
-**8. Submission**
-- Submit the following:
-  - Source code (GitHub repository)
-  - Documentation (README, API docs)
-  - Test results (coverage report, if applicable)
+- `POST /games` - create a new game
+- `GET /games` - list current user's games with move history and status
+- `GET /games/{game_id}` - get details of a specific game
+- `PUT /games/{game_id}/move/{position}` - make a move (position 1-9)
 
-## Execution and Support
-### Starting Point
-- You may start from scratch or fork the provided [Template Repository](https://github.com/hifigraz/backend.template).
-- Customize the template as needed for your implementation.
+Additional endpoints:
 
-### Repository Submission
-- Provide a link to your GitHub repository in the Teams assignment.
+- `GET /games/available` - list games waiting for an opponent
+- `POST /games/{game_id}/join` - join as player O
+- `DELETE /games/{game_id}` - delete a completed game (`won` or `draw`)
 
-## Clarifications and Notes
-- **Authentication**: Specify whether users must log in to create/join games or if games are anonymous.
-- **Game State**: Define how the game state (e.g., current player, board) is stored and updated.
-- **Error Handling**: Ensure clear error messages for invalid requests (e.g., “Position already taken”).
-- **Testing**: Focus on both happy paths (valid moves) and edge cases (invalid moves, full board).
+## Error Handling
+
+Move and game validation errors return HTTP 400 with clear messages, for example:
+
+- `Invalid position`
+- `Position already taken`
+- `Not your turn`
+- `Game is not in progress`
+
+## Local Setup
+
+### 1. Install dependencies
+
+```bash
+pip install -e .
+```
+
+### 2. Run with PostgreSQL (Docker)
+
+```bash
+docker compose up --build
+```
+
+The app starts at `http://localhost:8000`.
+
+### 3. Run locally without Docker
+
+Set `DATABASE_URL` environment variable (or use sqlite default):
+
+```bash
+uvicorn src.main:app --reload
+```
+
+## API Documentation
+
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+
+## Testing
+
+Run tests with:
+
+```bash
+pytest
+```
+
+API endpoint tests include:
+
+- successful auth and gameplay paths
+- authentication failures (missing/invalid tokens)
+- invalid moves (out-of-bounds, occupied position, wrong turn)
+- win and draw scenarios
+
+## Requirement Coverage
+
+- FastAPI + auth: implemented with JWT/OAuth2 password flow
+- CRUD game operations: create, update (moves), delete completed games
+- Business logic: win/draw detection and invalid move handling
+- Required endpoints: all implemented
+- Unit testing: endpoint tests and edge-case tests included
+- Documentation: OpenAPI + this README
+- Code quality: modular structure (`api`, `crud`, `model`, `schema`, `utils`, `test`)
