@@ -1,12 +1,12 @@
 """
 Unit tests for game management API endpoints:
-  POST /games                       – create a game
-  GET  /games                       – list my games
-  GET  /games/available             – list joinable games
-  GET  /games/{game_id}             – get a specific game
-  POST /games/{game_id}/join        – join a waiting game
-  PUT  /games/{game_id}/move/{pos}  – make a move
-  DELETE /games/{game_id}           – delete a game
+  POST /games                       - create a game
+  GET  /games                       - list my games
+  GET  /games/available             - list joinable games
+  GET  /games/{game_id}             - get a specific game
+  POST /games/{game_id}/join        - join a waiting game
+  PUT  /games/{game_id}/move/{pos}  - make a move
+  DELETE /games/{game_id}           - delete a game
 """
 from fastapi.testclient import TestClient
 

@@ -75,14 +75,41 @@ docker compose up --build
 ```
 
 The app starts at `http://localhost:8000`.
+PostgreSQL runs on `localhost:5432` and pgAdmin runs on `http://localhost:5050`.
+
+pgAdmin login:
+
+- email: `admin@example.com`
+- password: `admin123`
+
+Add a server in pgAdmin with:
+
+- host: `db`
+- port: `5432`
+- user: `admin`
+- password: `Kennwort1`
+- database: `testuserdb`
 
 ### 3. Run locally without Docker
 
-Set `DATABASE_URL` environment variable (or use sqlite default):
+Copy [.env.example](.env.example) to `.env`, then adjust the connection values for your local PostgreSQL instance:
+
+```bash
+cp .env.example .env
+```
+
+Then run the app normally:
 
 ```bash
 uvicorn src.main:app --reload
 ```
+
+If `.env` is present, the app reads `DATABASE_URL`, `JWT_SECRET_KEY`, `JWT_ALGORITHM`, and `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` from it. If not, it falls back to in-memory SQLite and default JWT settings.
+
+## Database Notes
+
+- Application runtime uses PostgreSQL when `DATABASE_URL` is set, either through Docker or a local `.env` file.
+- The test suite still uses in-memory SQLite, so tests stay fast and isolated.
 
 ## API Documentation
 

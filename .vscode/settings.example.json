@@ -1,5 +1,5 @@
 {
-  "python.defaultInterpreterPath": "/config/venv/bin/python",
+  "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
   "python.testing.pytestArgs": ["test"],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true

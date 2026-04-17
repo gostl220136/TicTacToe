@@ -65,7 +65,8 @@ lint = [
 ]
 
 test = [
-  "pytest"
+  "pytest",
+  "httpx"
 ]
 
 vim = [
