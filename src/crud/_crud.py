@@ -27,8 +27,8 @@ class Crud:
             )
             session.add(user)
             session.commit()
-            session.refresh(user)
-            return user
+            stmt = select(User).options(joinedload(User.entity)).where(User.user_name == user.user_name)
+            return session.scalar(stmt)
 
     def get_user_by_username(self, user_name: str) -> Optional[User]:
         with Session(self._engine) as session:
