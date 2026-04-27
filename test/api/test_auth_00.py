@@ -42,6 +42,41 @@ def test_register_duplicate_username(client: TestClient) -> None:
     assert "already registered" in resp.json()["detail"].lower()
 
 
+def test_register_missing_required_fields(client: TestClient) -> None:
+    """Missing required register fields return 422."""
+    resp_missing_user = client.post(
+        "/auth/register",
+        json={"password": "secret1", "name": "No User"},
+    )
+    resp_missing_password = client.post(
+        "/auth/register",
+        json={"user_name": "auth_missing_pw", "name": "No Password"},
+    )
+    resp_missing_name = client.post(
+        "/auth/register",
+        json={"user_name": "auth_missing_name", "password": "secret1"},
+    )
+
+    assert resp_missing_user.status_code == 422
+    assert resp_missing_password.status_code == 422
+    assert resp_missing_name.status_code == 422
+
+
+def test_register_invalid_lengths(client: TestClient) -> None:
+    """Too-short username or password returns 422."""
+    short_user = client.post(
+        "/auth/register",
+        json={"user_name": "ab", "password": "secret1", "name": "Short User"},
+    )
+    short_password = client.post(
+        "/auth/register",
+        json={"user_name": "auth_short_pw", "password": "abc", "name": "Short Password"},
+    )
+
+    assert short_user.status_code == 422
+    assert short_password.status_code == 422
+
+
 # ---------------------------------------------------------------------------
 # POST /auth/login
 # ---------------------------------------------------------------------------
@@ -82,6 +117,19 @@ def test_login_unknown_user(client: TestClient) -> None:
         data={"username": "nobody_xyz", "password": "pass"},
     )
     assert resp.status_code == 401
+
+
+def test_login_missing_password(client: TestClient) -> None:
+    """OAuth2 form data without password returns 422."""
+    client.post(
+        "/auth/register",
+        json={"user_name": "auth_login3", "password": "mypassword", "name": "Login User 3"},
+    )
+    resp = client.post(
+        "/auth/login",
+        data={"username": "auth_login3"},
+    )
+    assert resp.status_code == 422
 
 
 # ---------------------------------------------------------------------------
@@ -132,3 +180,15 @@ def test_update_me_no_token(client: TestClient) -> None:
     """PUT /auth/me without a token returns 401."""
     resp = client.put("/auth/me", json={"name": "Hacker"})
     assert resp.status_code == 401
+
+
+def test_update_me_invalid_payload(client: TestClient) -> None:
+    """PUT /auth/me with missing or invalid name returns 422."""
+    token = get_token(client, "auth_update_invalid", "pass", "Initial Name")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    missing_name = client.put("/auth/me", json={}, headers=headers)
+    empty_name = client.put("/auth/me", json={"name": ""}, headers=headers)
+
+    assert missing_name.status_code == 422
+    assert empty_name.status_code == 422

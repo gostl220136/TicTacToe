@@ -47,7 +47,7 @@ REST API for authenticated TicTacToe gameplay with persistent game state and mov
 
 Additional endpoints:
 
-- `GET /games/available` - list games waiting for an opponent
+- `GET /games/available` - list games waiting for an opponent (requires authentication)
 - `POST /games/{game_id}/join` - join as player O
 - `DELETE /games/{game_id}` - delete a completed game (`won` or `draw`)
 

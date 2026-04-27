@@ -63,12 +63,19 @@ def test_get_games_unauthenticated(client: TestClient) -> None:
 def test_get_available_games(client: TestClient) -> None:
     """GET /games/available returns games with no second player."""
     token = get_token(client, "g_avail1", "pass", "Avail One")
-    client.post("/games", headers={"Authorization": f"Bearer {token}"})
-    resp = client.get("/games/available")
+    headers = {"Authorization": f"Bearer {token}"}
+    client.post("/games", headers=headers)
+    resp = client.get("/games/available", headers=headers)
     assert resp.status_code == 200
     games = resp.json()["games"]
     for g in games:
         assert g["player_o"] is None
+
+
+def test_get_available_games_unauthenticated(client: TestClient) -> None:
+    """GET /games/available without a token returns 401."""
+    resp = client.get("/games/available")
+    assert resp.status_code == 401
 
 
 # ---------------------------------------------------------------------------

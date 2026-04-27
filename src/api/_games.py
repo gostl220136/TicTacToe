@@ -58,9 +58,10 @@ def get_games(current_user=Depends(get_current_user)):
     "/games/available",
     response_model=GameList,
     summary="List joinable games",
-    description="Return games waiting for a second player.",
+    description="Return games waiting for a second player for the authenticated user.",
 )
-def get_available_games():
+def get_available_games(current_user=Depends(get_current_user)):
+    assert current_user
     games = crud.get_available_games()
     game_list = [
         Game(
