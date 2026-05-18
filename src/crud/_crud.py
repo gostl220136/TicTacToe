@@ -64,6 +64,11 @@ class Crud:
             stmt = select(Game).where(Game.player_o.is_(None))
             return list(session.scalars(stmt))
 
+    def get_export_games(self) -> List[Game]:
+        with Session(self._engine) as session:
+            stmt = select(Game).order_by(Game.created_at.asc(), Game.id.asc())
+            return list(session.scalars(stmt))
+
     def get_user_games(self, user_name: str) -> List[Game]:
         with Session(self._engine) as session:
             stmt = select(Game).where((Game.player_x == user_name) | (Game.player_o == user_name))

@@ -11,6 +11,7 @@ REST API for authenticated TicTacToe gameplay with persistent game state and mov
   - win detection (rows, columns, diagonals)
   - draw detection
 - Game history stored as ordered move list
+- XML export endpoint for downloadable game data
 - OpenAPI/Swagger documentation with endpoint descriptions and schema examples
 - Pytest test suite for auth and game endpoints including edge cases
 
@@ -28,6 +29,7 @@ REST API for authenticated TicTacToe gameplay with persistent game state and mov
 - `status`: `"waiting"`, `"ongoing"`, `"won"`, `"draw"`
 - `winner`: `"X"` / `"O"` / `null`
 - `moves`: ordered list of `{ player, position }`
+- `created_at`: creation timestamp stored with each game
 
 ## API Endpoints
 
@@ -50,6 +52,29 @@ Additional endpoints:
 - `GET /games/available` - list games waiting for an opponent (requires authentication)
 - `POST /games/{game_id}/join` - join as player O
 - `DELETE /games/{game_id}` - delete a completed game (`won` or `draw`)
+- `GET /api/export/xml` - export all stored games as XML download
+
+## XML Export
+
+The export route returns an XML document with the following structure:
+
+1. Root element: `ticTacToeExport`
+2. Container element: `games` with a `count` attribute
+3. Per game: `game` element with `id`, `status`, and `currentPlayer`
+4. Game details:
+  - `players` with one `player` element per participant (`role` and `username` attributes)
+  - `winner` with optional `symbol` and `username` attributes
+  - `createdAt` as ISO 8601 timestamp
+  - `board` with nine `cell` elements in board order
+  - `moves` with ordered `move` elements containing `order`, `player`, and `position`
+
+## Export Flow
+
+1. The frontend button calls `GET /api/export/xml` with the current Bearer token.
+2. The backend loads all games from the database.
+3. The API converts each game, including move history and winner data, into XML nodes.
+4. The backend returns the XML with `application/xml` and a download filename.
+5. The browser receives the response as a file download.
 
 ## Error Handling
 
@@ -130,6 +155,7 @@ API endpoint tests include:
 - authentication failures (missing/invalid tokens)
 - invalid moves (out-of-bounds, occupied position, wrong turn)
 - win and draw scenarios
+- XML export download and XML structure checks
 
 ## Requirement Coverage
 

@@ -9,6 +9,20 @@ router = APIRouter()
 crud = Crud(get_engine())
 
 
+def serialize_game(game) -> Game:
+    return Game(
+        id=game.id,
+        player_x=game.player_x,
+        player_o=game.player_o,
+        created_at=game.created_at,
+        board=game.board,
+        current_player=game.current_player,
+        status=game.status,
+        winner=game.winner,
+        moves=game.moves,
+    )
+
+
 @router.post(
     "/games",
     response_model=Game,
@@ -19,16 +33,7 @@ crud = Crud(get_engine())
 )
 def create_game(current_user=Depends(get_current_user)):
     game = crud.create_game(current_user.user_name)
-    return Game(
-        id=game.id,
-        player_x=game.player_x,
-        player_o=game.player_o,
-        board=game.board,
-        current_player=game.current_player,
-        status=game.status,
-        winner=game.winner,
-        moves=game.moves
-    )
+    return serialize_game(game)
 
 
 @router.get(
@@ -39,18 +44,7 @@ def create_game(current_user=Depends(get_current_user)):
 )
 def get_games(current_user=Depends(get_current_user)):
     games = crud.get_user_games(current_user.user_name)
-    game_list = [
-        Game(
-            id=g.id,
-            player_x=g.player_x,
-            player_o=g.player_o,
-            board=g.board,
-            current_player=g.current_player,
-            status=g.status,
-            winner=g.winner,
-            moves=g.moves
-        ) for g in games
-    ]
+    game_list = [serialize_game(g) for g in games]
     return GameList(games=game_list)
 
 
@@ -63,18 +57,7 @@ def get_games(current_user=Depends(get_current_user)):
 def get_available_games(current_user=Depends(get_current_user)):
     assert current_user
     games = crud.get_available_games()
-    game_list = [
-        Game(
-            id=g.id,
-            player_x=g.player_x,
-            player_o=g.player_o,
-            board=g.board,
-            current_player=g.current_player,
-            status=g.status,
-            winner=g.winner,
-            moves=g.moves
-        ) for g in games
-    ]
+    game_list = [serialize_game(g) for g in games]
     return GameList(games=game_list)
 
 
@@ -88,16 +71,7 @@ def get_game(game_id: int, current_user=Depends(get_current_user)):
     game = crud.get_game(game_id)
     if not game or (game.player_x != current_user.user_name and game.player_o != current_user.user_name):
         raise HTTPException(status_code=404, detail="Game not found")
-    return Game(
-        id=game.id,
-        player_x=game.player_x,
-        player_o=game.player_o,
-        board=game.board,
-        current_player=game.current_player,
-        status=game.status,
-        winner=game.winner,
-        moves=game.moves
-    )
+    return serialize_game(game)
 
 
 @router.post(
@@ -110,16 +84,7 @@ def join_game(game_id: int, current_user=Depends(get_current_user)):
     game = crud.join_game(game_id, current_user.user_name)
     if not game:
         raise HTTPException(status_code=400, detail="Cannot join this game")
-    return Game(
-        id=game.id,
-        player_x=game.player_x,
-        player_o=game.player_o,
-        board=game.board,
-        current_player=game.current_player,
-        status=game.status,
-        winner=game.winner,
-        moves=game.moves
-    )
+    return serialize_game(game)
 
 
 @router.put(
@@ -140,16 +105,7 @@ def make_move(game_id: int, position: int, current_user=Depends(get_current_user
         raise HTTPException(status_code=400, detail=str(ex)) from ex
     if not game:
         raise HTTPException(status_code=400, detail="Invalid move")
-    return Game(
-        id=game.id,
-        player_x=game.player_x,
-        player_o=game.player_o,
-        board=game.board,
-        current_player=game.current_player,
-        status=game.status,
-        winner=game.winner,
-        moves=game.moves
-    )
+    return serialize_game(game)
 
 
 @router.delete(

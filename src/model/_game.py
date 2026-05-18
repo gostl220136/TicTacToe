@@ -1,5 +1,6 @@
+from datetime import datetime
 from typing import List, Optional
-from sqlalchemy import String, Integer, JSON, ForeignKey
+from sqlalchemy import String, Integer, JSON, ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 from ._base import Base
 
@@ -15,3 +16,4 @@ class Game(Base):
     status: Mapped[str] = mapped_column(String(10), default="ongoing")
     winner: Mapped[Optional[str]] = mapped_column(String(1), nullable=True)
     moves: Mapped[List[dict]] = mapped_column(JSON, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)

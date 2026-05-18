@@ -1,4 +1,5 @@
 from pydantic import BaseModel, ConfigDict, Field
+from datetime import datetime
 from typing import List, Optional
 
 
@@ -22,6 +23,7 @@ class Game(GameBase):
                 "id": 1,
                 "player_x": "alice",
                 "player_o": "bob",
+                "created_at": "2026-05-18T12:00:00",
                 "board": ["X", "O", "", "", "X", "", "", "", "O"],
                 "current_player": "X",
                 "status": "ongoing",
@@ -39,6 +41,7 @@ class Game(GameBase):
     id: int = Field(description="Game identifier", examples=[1])
     player_x: str = Field(description="Username of player X", examples=["alice"])
     player_o: Optional[str] = Field(default=None, description="Username of player O", examples=["bob"])
+    created_at: datetime = Field(description="Creation timestamp of the game")
     board: List[str] = Field(description="Board state with 9 entries. Empty string means free position.")
     current_player: str = Field(description="Current symbol to move (X or O)", examples=["X"])
     status: str = Field(description="Game status: waiting, ongoing, won, draw", examples=["ongoing"])
