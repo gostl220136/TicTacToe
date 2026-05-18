@@ -27,9 +27,11 @@ _TEST_CRUD = Crud(_TEST_ENGINE)
 
 # Patch module-level singletons BEFORE the app singleton is (re)built
 import src.api._auth as _auth_module   # noqa: E402
+import src.api._export as _export_module  # noqa: E402
 import src.api._games as _games_module  # noqa: E402
 
 _auth_module.crud = _TEST_CRUD
+_export_module.crud = _TEST_CRUD
 _games_module.crud = _TEST_CRUD
 
 # Reset the FastAPI app singleton so it is (re)built with the patched routers
