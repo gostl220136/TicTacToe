@@ -1,6 +1,6 @@
 from xml.etree import ElementTree as ET
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from starlette.responses import Response
 
 from src.api._auth import get_current_user
@@ -68,6 +68,51 @@ def _build_export_xml() -> str:
     return ET.tostring(root, encoding="utf-8", xml_declaration=True).decode("utf-8")
 
 
+def _build_export_xml_for_game(game) -> str:
+    root = ET.Element("ticTacToeExport")
+    games_element = ET.SubElement(root, "games", count="1")
+
+    game_schema = serialize_game(game)
+    game_element = ET.SubElement(
+        games_element,
+        "game",
+        id=str(game_schema.id),
+        status=game_schema.status,
+        currentPlayer=game_schema.current_player,
+    )
+
+    players_element = ET.SubElement(game_element, "players")
+    ET.SubElement(players_element, "player", role="X", username=game_schema.player_x)
+    if game_schema.player_o:
+        ET.SubElement(players_element, "player", role="O", username=game_schema.player_o)
+
+    winner_element = ET.SubElement(game_element, "winner")
+    if game_schema.winner:
+        winner_element.set("symbol", game_schema.winner)
+        winner_user = game_schema.player_x if game_schema.winner == "X" else game_schema.player_o
+        if winner_user:
+            winner_element.set("username", winner_user)
+
+    _append_text_element(game_element, "createdAt", game_schema.created_at.isoformat())
+
+    board_element = ET.SubElement(game_element, "board")
+    for index, cell in enumerate(game_schema.board, start=1):
+        board_cell = ET.SubElement(board_element, "cell", index=str(index))
+        board_cell.text = cell
+
+    moves_element = ET.SubElement(game_element, "moves")
+    for order, move in enumerate(game_schema.moves, start=1):
+        ET.SubElement(
+            moves_element,
+            "move",
+            order=str(order),
+            player=move.player,
+            position=str(move.position),
+        )
+
+    return ET.tostring(root, encoding="utf-8", xml_declaration=True).decode("utf-8")
+
+
 @router.get(
     "/xml",
     summary="Export all games as XML",
@@ -80,4 +125,22 @@ def export_xml(current_user=Depends(get_current_user)):
         content=xml_content,
         media_type="application/xml",
         headers={"Content-Disposition": 'attachment; filename="tictactoe-export.xml"'},
+    )
+
+
+@router.get(
+    "/xml/{game_id}",
+    summary="Export single game as XML",
+    description="Export a single TicTacToe game by id as a downloadable XML document.",
+)
+def export_xml_game(game_id: int, current_user=Depends(get_current_user)):
+    assert current_user
+    game = crud.get_game(game_id)
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    xml_content = _build_export_xml_for_game(game)
+    return Response(
+        content=xml_content,
+        media_type="application/xml",
+        headers={"Content-Disposition": f'attachment; filename="tictactoe-export-{game_id}.xml"'},
     )
